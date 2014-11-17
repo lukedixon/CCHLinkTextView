@@ -241,14 +241,17 @@ NSString *const CCHLinkAttributeName = @"CCHLinkAttributeName";
 
 - (void)didTouchDownAtLocation:(CGPoint)location
 {
+    __block NSRange lastRange = NSMakeRange(0, 0);
     [self enumerateLinkRangesContainingLocation:location usingBlock:^(NSRange range) {
-        NSMutableAttributedString *attributedText = [self.attributedText mutableCopy];
-        for (NSString *attribute in self.linkTextAttributes) {
-            [attributedText removeAttribute:attribute range:range];
-        }
-        [attributedText addAttributes:self.linkTextTouchAttributes range:range];
-        [self setAttributedText:attributedText skipLinkTextAttributes:YES];
+        lastRange = range;
     }];
+    
+    NSMutableAttributedString *attributedText = [self.attributedText mutableCopy];
+    for (NSString *attribute in self.linkTextAttributes) {
+        [attributedText removeAttribute:attribute range:lastRange];
+    }
+    [attributedText addAttributes:self.linkTextTouchAttributes range:lastRange];
+    [super setAttributedText:attributedText];
 }
 
 - (void)didCancelTouchDownAtLocation:(CGPoint)location
@@ -265,22 +268,28 @@ NSString *const CCHLinkAttributeName = @"CCHLinkAttributeName";
 
 - (void)didTapAtLocation:(CGPoint)location
 {
+    __block NSRange lastRange = NSMakeRange(0, 0);
     [self enumerateLinkRangesContainingLocation:location usingBlock:^(NSRange range) {
-        if ([self.linkDelegate respondsToSelector:@selector(linkTextView:didTapLinkWithValue:)]) {
-            id value = [self.attributedText attribute:CCHLinkAttributeName atIndex:range.location effectiveRange:NULL];
-            [self.linkDelegate linkTextView:self didTapLinkWithValue:value];
-        }
+        lastRange = range;
     }];
+    
+    if ([self.linkDelegate respondsToSelector:@selector(linkTextView:didTapLinkWithValue:)]) {
+        id value = [self.attributedText attribute:CCHLinkAttributeName atIndex:lastRange.location effectiveRange:NULL];
+        [self.linkDelegate linkTextView:self didTapLinkWithValue:value];
+    }
 }
 
 - (void)didLongPressAtLocation:(CGPoint)location
 {
+    __block NSRange lastRange = NSMakeRange(0, 0);
     [self enumerateLinkRangesContainingLocation:location usingBlock:^(NSRange range) {
-        if ([self.linkDelegate respondsToSelector:@selector(linkTextView:didLongPressLinkWithValue:)]) {
-            id value = [self.attributedText attribute:CCHLinkAttributeName atIndex:range.location effectiveRange:NULL];
-            [self.linkDelegate linkTextView:self didLongPressLinkWithValue:value];
-        }
+        lastRange = range;
     }];
+    
+    if ([self.linkDelegate respondsToSelector:@selector(linkTextView:didLongPressLinkWithValue:)]) {
+        id value = [self.attributedText attribute:CCHLinkAttributeName atIndex:lastRange.location effectiveRange:NULL];
+        [self.linkDelegate linkTextView:self didLongPressLinkWithValue:value];
+    }
 }
 
 @end
